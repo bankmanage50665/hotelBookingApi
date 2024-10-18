@@ -1,0 +1,64 @@
+const express = require("express");
+const app = express();
+const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
+const path = require("path");
+const fs = require("fs");
+const dotEnv = require("dotenv");
+dotEnv.config();
+const cors = require("cors");
+
+const bookingRouter = require("./routes/booking_routes.js");
+const hotelRoutes = require("./routes/hotel_routes.js");
+const HttpError = require("./middleware/HttpError.js");
+const otpRoute = require("./routes/user_routes.js");
+
+const url = `mongodb+srv://${process.env.DB_USER_NAME}:${process.env.DB_USER_PASSWORD}@cluster0.wdrbduw.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority&appName=Cluster0`;
+
+app.use("/uploads/images", express.static(path.join("uploads", "images")));
+app.use(bodyParser.json());
+
+app.use(
+  cors({
+    // origin: "https://ecommerce50665.web.app", // Add both production and local URLs
+    origin: "http://localhost:3001", // Add both production and local URLs
+    credentials: true,
+  })
+);
+
+app.use("/otp", otpRoute);
+app.use("/hoteles", hotelRoutes);
+app.use("/bookings", bookingRouter);
+
+app.use((req, res, next) => {
+  const error = new HttpError("Could not find this route", 404);
+  throw error;
+});
+
+app.use((err, req, res, next) => {
+  if (req.file) {
+    fs.unlink(req.files.forEach((file) => file.path));
+  }
+
+  if (res.headerSent) {
+    return next(err);
+  }
+  res.status(err.code || 500);
+  res.json({
+    message: err.message || "Something went wrong, Please try again later.",
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+
+mongoose
+  .connect(url)
+  .then((req, res) => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.log(PORT);
+    console.log(err);
+  });
