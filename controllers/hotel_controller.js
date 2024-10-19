@@ -35,7 +35,7 @@ async function addHotle(req, res, next) {
     creator,
     type,
     status,
-    bookingId:[]
+    bookingId: [],
   });
 
   const findCreator = await User.findById(creator);
@@ -73,8 +73,6 @@ async function getHotelesList(req, res, next) {
 
 async function hotelById(req, res, next) {
   const hotelId = req.params.id;
-
-
 
   let findHotelById;
   try {
@@ -141,10 +139,24 @@ async function deleteHotel(req, res, next) {
 
   try {
     findHotelById = await Hotel.findById(hotelId);
-    
   } catch (err) {
     return next(
-      new HttpError("Field to delete hotel, Please try again later.", 500)
+      new HttpError(
+        "Field to find hotel by id for delete, Please try again later.",
+        500
+      )
+    );
+  }
+
+  let user;
+  try {
+    user = await User.findById(findHotelById.creator);
+  } catch (err) {
+    return next(
+      new HttpError(
+        "Field to user for  hotel delete, Please try again later.",
+        500
+      )
     );
   }
 
@@ -154,7 +166,21 @@ async function deleteHotel(req, res, next) {
     })
   );
 
-  await findHotelById.deleteOne();
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await findHotelById.deleteOne({ session: sess });
+    user.createdRooms.pull(findHotelById.id);
+    await user.save({ session: sess });
+    sess.commitTransaction();
+  } catch (err) {
+    return next(
+      new HttpError(
+        "Field to delete hotel or cancel booking, Please try again later.",
+        500
+      )
+    );
+  }
 
   res.json({ message: "Hotel delete sucessfully.", hotel: findHotelById });
 }

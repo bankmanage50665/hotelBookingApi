@@ -1,5 +1,5 @@
 // controllers/bookingController.js
-const { default: mongoose } = require("mongoose");
+const mongoose = require("mongoose");
 const { validationResult } = require("express-validator");
 
 const Booking = require("../model/booking_model");
@@ -54,19 +54,6 @@ exports.createBooking = async (req, res, next) => {
     );
   }
 
-  try {
-    const sess = await mongoose.startSession();
-    sess.startTransaction();
-    await newBooking.save({ session: sess });
-    user.bookedRooms.push(newBooking);
-    await user.save({ session: sess });
-    await sess.commitTransaction();
-  } catch (err) {
-    return next(
-      new HttpError("Field to create booking, Please try again later.", 500)
-    );
-  }
-
   let hotel;
   try {
     hotel = await Hotel.findById(hotelId);
@@ -89,15 +76,15 @@ exports.createBooking = async (req, res, next) => {
     const sess = await mongoose.startSession();
     sess.startTransaction();
     await newBooking.save({ session: sess });
+    user.bookedRooms.push(newBooking);
+    await user.save({ session: sess });
     hotel.bookingId.push(newBooking);
     await hotel.save({ session: sess });
+
     await sess.commitTransaction();
   } catch (err) {
     return next(
-      new HttpError(
-        "Field to adding bookingId to hoteles bookingId array, Please try again later.",
-        500
-      )
+      new HttpError("Field to create booking, Please try again later.", 500)
     );
   }
 
@@ -133,8 +120,6 @@ exports.getAllBooking = async (req, res, next) => {
 exports.getUserBookings = async (req, res, next) => {
   const userId = req.params.userId;
 
-
-
   if (!userId) {
     return next(new HttpError("Couldn't get id", 500));
   }
@@ -145,8 +130,6 @@ exports.getUserBookings = async (req, res, next) => {
       model: "Booking",
       populate: { path: "hotelId", model: "Hotel" },
     });
-
- 
 
     res.json({
       message: "Booked hotel fetched sucessfully.",
