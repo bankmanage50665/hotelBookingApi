@@ -185,33 +185,7 @@ async function deleteHotel(req, res, next) {
   res.json({ message: "Hotel delete sucessfully.", hotel: findHotelById });
 }
 
-async function bookHotel(req, res, next) {
-  const hotelId = req.params.id;
-  if (!hotelId) {
-    return next(new HttpError("Couldn't find hotel id"));
-  }
-  const { status, userId, bookedFor, checkin, guest } = req.body;
 
-  const findHotelToBook = await Hotel.findById(hotelId);
-
-  findHotelToBook.status = status;
-
-  const bookBy = await User.findById(userId);
-
-  try {
-    const sess = await mongoose.startSession();
-    sess.startTransaction();
-    await findHotelToBook.save({ session: sess });
-    bookBy.bookedRooms.push(findHotelToBook);
-    await bookBy.save({ session: sess });
-    await sess.commitTransaction();
-  } catch (err) {
-    return next(
-      new HttpError("Field to booked hotel. Please try again later.", 500)
-    );
-  }
-  res.json({ message: "Hotel booked sucessfully.", hotel: findHotelToBook });
-}
 
 module.exports = {
   addHotle,
@@ -219,5 +193,4 @@ module.exports = {
   hotelById,
   updateHotel,
   deleteHotel,
-  bookHotel,
 };

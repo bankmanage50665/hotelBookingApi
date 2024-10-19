@@ -152,77 +152,66 @@ exports.cancelBooking = async (req, res, next) => {
   let booking;
   try {
     booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return next(new HttpError("No booking found to cancel.", 404));
+    }
   } catch (err) {
     return next(
-      new HttpError("Field to find booking, Please try again later.", 500)
+      new HttpError("Failed to find booking. Please try again later.", 500)
     );
-  }
-
-  if (!booking) {
-    return next("No booking find to cancel.", 500);
   }
 
   let user;
   try {
     user = await User.findById(booking.userId).populate("bookedRooms");
+    if (!user) {
+      return next(
+        new HttpError("Couldn't find user in database with that id", 404)
+      );
+    }
   } catch (err) {
     return next(
       new HttpError(
-        "Field to find user for bookig, Please try again later.",
+        "Failed to find user for booking. Please try again later.",
         500
       )
-    );
-  }
-
-  if (!user) {
-    return next(
-      new HttpError("Couldn't find user in database with that id", 500)
-    );
-  }
-
-  try {
-    const sess = await mongoose.startSession();
-    sess.startTransaction();
-
-    user.bookedRooms.pull(booking._id.toString());
-    await user.save({ session: sess });
-    sess.commitTransaction();
-  } catch (err) {
-    return next(
-      new HttpError("Field to cancel booking, Please try again later.", 500)
     );
   }
 
   let hotel;
   try {
     hotel = await Hotel.findById(booking.hotelId);
+    if (!hotel) {
+      return next(new HttpError("Couldn't find hotel with provided id", 404));
+    }
   } catch (err) {
     return next(
       new HttpError(
-        "Field to find user for bookig, Please try again later.",
+        "Failed to find hotel for booking. Please try again later.",
         500
       )
     );
-  }
-  if (!hotel) {
-    return next(new HttpError('Couldn"t find hotel with provided id', 500));
   }
 
   try {
     const sess = await mongoose.startSession();
     sess.startTransaction();
+
+    user.bookedRooms.pull(booking._id);
+    await user.save({ session: sess });
     await booking.deleteOne({ session: sess });
-    hotel.bookingId.pull(booking._id.toString());
+    hotel.bookingId.pull(booking._id);
     await hotel.save({ session: sess });
-    sess.commitTransaction();
+
+    await sess.commitTransaction();
   } catch (err) {
     return next(
-      new HttpError("Field to cancel booking, Please try again later.", 500)
+      new HttpError("Failed to cancel booking. Please try again later.", 500)
     );
   }
 
-  res.json({
-    message: "Hotel booking canceled sucessfully",
+  res.status(200).json({
+    message: "Hotel booking cancelled successfully",
   });
 };
 

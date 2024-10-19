@@ -33,8 +33,8 @@ router.post(
   ],
   createBooking
 );
-router.delete("/:bookingId/cancel", cancelBooking);
 router.patch("/:bookingId/update", updateBooking);
+router.delete("/:bookingId/cancel", cancelBooking);
 router.delete("/:bookingId/delete", deleteBooking);
 
 module.exports = router;
