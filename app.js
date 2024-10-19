@@ -49,16 +49,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 
 mongoose
   .connect(url)
   .then((req, res) => {
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
     });
   })
   .catch((err) => {
-    console.log(PORT);
+    console.log(port);
     console.log(err);
   });
