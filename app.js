@@ -1,11 +1,10 @@
+require("dotenv").config()
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const path = require("path");
 const fs = require("fs");
-const dotEnv = require("dotenv");
-dotEnv.config();
 const cors = require("cors");
 
 const bookingRouter = require("./routes/booking_routes.js");
